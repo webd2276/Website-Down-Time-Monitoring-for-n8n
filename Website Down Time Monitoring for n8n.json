@@ -1,0 +1,811 @@
+{
+  "name": "Website Down Time Monitoring for n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "76336f93-a2ab-4203-a2d0-c1cb18bc18a0",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -960,
+        912
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0c31bb29-a6ba-4cca-acfa-8166dbf37731",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -512,
+        912
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['Website URL'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "id": "b2b71dd5-610b-4897-9b98-bafdf249bb05",
+      "name": "Check website status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -304,
+        384
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 959117872,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit#gid=959117872",
+          "cachedResultName": "Sheet1"
+        },
+        "options": {}
+      },
+      "id": "db2ca919-33d5-490f-afaf-8ca798bd410a",
+      "name": "Website URLs",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -736,
+        912
+      ],
+      "executeOnce": false,
+      "typeVersion": 4.6,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fudVLnJ3KYaJiQlk",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit?usp=drivesdk",
+          "cachedResultName": "Website Moniter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit#gid=0",
+          "cachedResultName": "Sheet2"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Website URL",
+              "lookupValue": "={{ $('Loop Over Items').item.json['Website URL'] }}"
+            },
+            {
+              "lookupColumn": "Up Time"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4a67976-ab52-4366-8acb-3ffdf11eef28",
+      "name": "Get Active Down Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        144,
+        288
+      ],
+      "executeOnce": false,
+      "typeVersion": 4.6,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fudVLnJ3KYaJiQlk",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit?usp=drivesdk",
+          "cachedResultName": "Website Moniter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 959117872,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit#gid=959117872"
+        },
+        "columns": {
+          "value": {
+            "Up Time": "={{ new Date().toLocaleTimeString('en-GB', { hour12: false }) }}",
+            "row_number": "={{ $json.row_number }}",
+            "Website URL": "={{ $json['Website URL'] }}",
+            "Total downtime": "={{(() => {\n  const downTimeStr = $input.first().json['Down Time'];\n\n  // Get current time in HH:MM:SS format\n  const now = new Date();\n  const upTimeStr = now.toLocaleTimeString('en-GB', { hour12: false });\n\n  function parseTime(timeStr) {\n    const [h, m, s] = timeStr.split(\":\").map(Number);\n    const date = new Date();\n    date.setHours(h, m, s, 0);\n    return date;\n  }\n\n  const downTime = parseTime(downTimeStr);\n  const upTime = parseTime(upTimeStr);\n\n  // Handle overnight scenario\n  if (upTime < downTime) {\n    upTime.setDate(upTime.getDate() + 1);\n  }\n\n  const diffMs = upTime - downTime;\n  const totalMinutes = Math.floor(diffMs / 60000);\n  const hours = Math.floor(totalMinutes / 60);\n  const minutes = totalMinutes % 60;\n  const seconds = Math.floor((diffMs % 60000) / 1000);\n\n  return `${hours}h ${minutes}m ${seconds}s`;\n})()}}"
+          },
+          "schema": [
+            {
+              "id": "Website URL",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Website URL",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Down Time",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Down Time",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Up Time",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Up Time",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total downtime",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Total downtime",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fe79b406-8a45-4913-89ba-715f36b32b49",
+      "name": "Update Uptime and Total Downtime",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        592,
+        288
+      ],
+      "executeOnce": false,
+      "typeVersion": 4.6,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fudVLnJ3KYaJiQlk",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let hasIncompleteRecord = false;\n\nfor (const item of $input.all()) {\n  const url = item.json['Website URL']?.trim();\n  const downTime = item.json['Down Time']?.trim();\n  const upTime = item.json['Up Time']?.trim();\n  const totalDowntime = item.json['Total downtime']?.trim();\n\n  if (url && downTime && (!upTime || !totalDowntime)) {\n    hasIncompleteRecord = true;\n  }\n}\n\nreturn [\n  {\n    json: {\n      status: hasIncompleteRecord ? \"yes\" : \"no\",\n      websites: $input.first().json['Website URL']\n    }\n  }\n];\n"
+      },
+      "id": "753cad76-25ca-4460-9c89-aa0ac590fb3b",
+      "name": "Find Existing Record",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        368,
+        688
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "options": {}
+      },
+      "id": "0933f0ba-df61-45d2-8bee-d3685df993a1",
+      "name": "Add Downtime Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        816,
+        688
+      ],
+      "executeOnce": false,
+      "typeVersion": 4.6,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fudVLnJ3KYaJiQlk",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"assistantId\": \"assistant_id\",\n  \"assistantOverrides\": {\n    \"variableValues\": {\n    \"name\":\"John\",\n    \"web_domain\":\"{{ $json['Website URL'] }}\"\n    }\n  },\n  \"customer\": {\n    \"number\": \"+919999999999\"\n  },\n  \"phoneNumberId\": \"phone_number_id\"\n}",
+        "options": {}
+      },
+      "id": "323ed76c-f1f3-4c63-b746-9bc5cccfa0c0",
+      "name": "Notify over Phone Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1024,
+        1056
+      ],
+      "typeVersion": 4.2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "9e5df4d3-c9fd-4311-ae97-c06fcbcc1c97",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "yes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f73b0f6e-9bde-4018-9d9e-c080923434cf",
+      "name": "Check Downtime Exists",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        592,
+        688
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "sendTo": "user@example.com",
+        "subject": "=Your site is down!!",
+        "message": "=Hi there,\n\nThe Website {{ $json['Website URL'] }} is Down. Please take the required action as soon as possible.",
+        "options": {}
+      },
+      "id": "5f4bf531-1699-4500-afea-5ec70cd3a1c1",
+      "name": "Email Notification for Down",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1024,
+        464
+      ],
+      "webhookId": "01059553-6361-4349-99c0-d6e467198e19",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BJz3f7izDWm311zd",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U08QEDH1YVB",
+          "mode": "list"
+        },
+        "text": "=🚨 Alert:| Hi there, The {{ $json['Website URL'] }} website is currently down. Kindly look into this issue and take necessary action as soon as possible.  Thank you.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "2e34c4da-e950-4d8a-840f-15ce39ff0c61",
+      "name": "Slack Notification for Down",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1024,
+        656
+      ],
+      "webhookId": "379f0487-218b-4137-9a89-02c29f9ab48f",
+      "typeVersion": 2.3,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "PmaDAR6b4WBec7iY",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "123456789",
+        "text": "=🚨 Alert: Hi there, | The {{ $json['Website URL'] }} website is currently down. Kindly look into this issue and take necessary action as soon as possible.  Thank you.",
+        "additionalFields": {}
+      },
+      "id": "3b9b0e98-e98c-4e24-92be-197d52564643",
+      "name": "Telegram Notification for Down",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1024,
+        864
+      ],
+      "webhookId": "b76cf08e-146f-4dce-8b55-0467b6130b5c",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "zVAoTHRkTCDqmQJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "user@example.com",
+        "subject": "=Site is now working fine.",
+        "message": "=Hi there,\n\nWe're excited to announce that the {{ $('Website URLs').item.json['Website URL'] }} is now live!\nFeel free to visit and explore.",
+        "options": {}
+      },
+      "id": "06efb04a-da15-4ddf-8a74-6bc30a1d65e2",
+      "name": "Email Notification for Up",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        816,
+        80
+      ],
+      "webhookId": "01059553-6361-4349-99c0-d6e467198e19",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BJz3f7izDWm311zd",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "mode": "list",
+          "value": "U08QEDH1YVB",
+          "cachedResultName": "mail"
+        },
+        "text": "We're excited to announce that the {{ $('Website URLs').item.json['Website URL'] }} is now live! Feel free to visit and explore.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "80402502-2b8c-4f99-b68e-fbcda5ffb1b6",
+      "name": "Slack Notification for Up",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        816,
+        288
+      ],
+      "webhookId": "379f0487-218b-4137-9a89-02c29f9ab48f",
+      "typeVersion": 2.3,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "PmaDAR6b4WBec7iY",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "123456789",
+        "text": "We're excited to announce that the {{ $('Website URLs').item.json['Website URL'] }} is now live! Feel free to visit and explore.",
+        "additionalFields": {}
+      },
+      "id": "93a4b7a1-7876-4e87-bcf5-f68de8980497",
+      "name": "Telegram Notification for Up",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        816,
+        480
+      ],
+      "webhookId": "b76cf08e-146f-4dce-8b55-0467b6130b5c",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "zVAoTHRkTCDqmQJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Website downtime monitoring with logging\nSample Sheet: https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit?usp=sharing\n- Sheet 1 - Add domain list for monitoring.\n- Sheet 2 - Store all downtime logs.\n\n\nCreate new assistant in Vapi and set First message as below.\n- Hello {{name}}, I'm Website Monitoring Assistant. This is a system alert. The {{web_domain}} is currently down. Please take immediate action to investigate and resolve the issue. Thank you.\n\n\n",
+        "height": 280,
+        "width": 560
+      },
+      "id": "b30f6f9a-3fc7-46b6-824e-0b696a66f232",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        -64
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "1337beb6-7974-45ab-9fa0-93f5ce0ee7b7",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{(() => {   const data = $json;   return Object.keys(data).length === 0; })()}}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f2cb9e8a-e8f0-4f82-be6c-945087fb32e3",
+      "name": "If Down Record Exist",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        368,
+        288
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"statusCode\"]}}",
+              "operation": "equal",
+              "value2": 400
+            }
+          ]
+        }
+      },
+      "id": "9fa3b600-7ae1-4c3a-b244-a5a774836c0d",
+      "name": "If Site Up",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -80,
+        384
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit?usp=drivesdk",
+          "cachedResultName": "Website Moniter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_VVpkIvpYQigw5q0KmPXUAC2aV2rk1nRQLQZ7YK2KwY/edit#gid=0",
+          "cachedResultName": "Sheet2"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Website URL",
+              "lookupValue": "={{ $('Loop Over Items').item.json['Website URL'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "850fc7c2-2b40-4bac-a71e-d6eb928faa52",
+      "name": "Get Existing Down Records",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        144,
+        688
+      ],
+      "typeVersion": 4.6,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fudVLnJ3KYaJiQlk",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If Site Up": {
+      "main": [
+        [
+          {
+            "node": "Get Active Down Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Existing Down Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website URLs": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Check website status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Website URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Downtime Record": {
+      "main": [
+        [
+          {
+            "node": "Email Notification for Down",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification for Down",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Notification for Down",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify over Phone Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check website status": {
+      "main": [
+        [
+          {
+            "node": "If Site Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Record": {
+      "main": [
+        [
+          {
+            "node": "Check Downtime Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Down Record Exist": {
+      "main": [
+        [
+          {
+            "node": "Update Uptime and Total Downtime",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Downtime Exists": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Downtime Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Down Record": {
+      "main": [
+        [
+          {
+            "node": "If Down Record Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify over Phone Call": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Down Records": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Notification for Up": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Uptime and Total Downtime": {
+      "main": [
+        [
+          {
+            "node": "Email Notification for Up",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification for Up",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Notification for Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "749e30b7-5ba3-4cac-960c-dc439a867cbe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fc5d2a869cfa9eea4a576796f206f3a58801649ef842d31b3f075c75f487857"
+  },
+  "id": "QvjptssCJgPkXXyF",
+  "tags": []
+}
